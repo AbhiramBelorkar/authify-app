@@ -1,4 +1,4 @@
-package com.authify.app.dto;
+package com.authify.app.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,11 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProfileReponse {
+public class AuthRequest {
 
-    private String userId;
-    private String name;
     private String email;
-    private Boolean isAccountVerified;
-
+    private String password;
 }
