@@ -1,6 +1,7 @@
 package com.authify.app.config;
 
-import com.authify.app.service.AppUserDetailsServiceImpl;
+import com.authify.app.filters.JwtRequestFilter;
+import com.authify.app.service.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,31 +16,41 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private AppUserDetailsServiceImpl appUserDetailsService;
+    private final AppUserDetailsService appUserDetailsService;
+    private final JwtRequestFilter jwtRequestFilter;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/register", "/reset-otp", "/rest-password")
-                        .permitAll().anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .logout(AbstractHttpConfigurer::disable);
-             return http.build();
+    public SecurityConfig(AppUserDetailsService appUserDetailsService,
+                          JwtRequestFilter jwtRequestFilter) {
+        this.appUserDetailsService = appUserDetailsService;
+        this.jwtRequestFilter = jwtRequestFilter;
     }
 
     @Bean
-    private CorsFilter corsFilter() {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.cors(Customizer.withDefaults())        // Enables CORS with default settings
+                .csrf(AbstractHttpConfigurer::disable)      // Disables CSRF (since you're stateless)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/**", "/profile/**", "/reset-otp", "/rest-password")
+                        .permitAll().anyRequest()       // Everything else requires authentication
+                        .authenticated())       // Everything else requires authentication
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))     // No session, JWT-based
+                .logout(AbstractHttpConfigurer::disable)       // Disables default logout handling
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOrigin("http://localhost:5173"); // your frontend
         config.addAllowedHeader("*");
@@ -60,6 +71,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(){
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        System.out.println(appUserDetailsService.toString());
         authenticationProvider.setUserDetailsService(appUserDetailsService);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(authenticationProvider);
