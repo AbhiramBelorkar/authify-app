@@ -6,4 +6,6 @@ import com.authify.app.dto.ProfileRequest;
 public interface ProfileService {
 
     ProfileResponse createProfile(ProfileRequest req);
+
+    ProfileResponse getProfile(String email);
 }

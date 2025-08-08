@@ -27,11 +27,14 @@ public class SecurityConfig {
 
     private final AppUserDetailsService appUserDetailsService;
     private final JwtRequestFilter jwtRequestFilter;
+    private final CustomAutheticationEntryPoint customAutheticationEntryPoint;
 
     public SecurityConfig(AppUserDetailsService appUserDetailsService,
-                          JwtRequestFilter jwtRequestFilter) {
+                          JwtRequestFilter jwtRequestFilter,
+                          CustomAutheticationEntryPoint customAutheticationEntryPoint) {
         this.appUserDetailsService = appUserDetailsService;
         this.jwtRequestFilter = jwtRequestFilter;
+        this.customAutheticationEntryPoint = customAutheticationEntryPoint;
     }
 
     @Bean
@@ -39,13 +42,15 @@ public class SecurityConfig {
         http.cors(Customizer.withDefaults())        // Enables CORS with default settings
                 .csrf(AbstractHttpConfigurer::disable)      // Disables CSRF (since you're stateless)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/profile/**", "/reset-otp", "/rest-password")
+                        .requestMatchers("/auth/**", "/profile", "/register", "/test", "/reset-otp", "/rest-password")
                         .permitAll().anyRequest()       // Everything else requires authentication
                         .authenticated())       // Everything else requires authentication
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))     // No session, JWT-based
                 .logout(AbstractHttpConfigurer::disable)       // Disables default logout handling
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex
+                        -> ex.authenticationEntryPoint(customAutheticationEntryPoint));
         return http.build();
     }
 
