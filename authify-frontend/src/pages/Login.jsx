@@ -13,7 +13,7 @@ function Login() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');     
   const [loading, setLoading] = React.useState(false);
-  const {backendUrl, setIsLoggedIn} = React.useContext(AppContext);
+  const {backendUrl, setIsLoggedIn, getUserData} = React.useContext(AppContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -42,10 +42,11 @@ function Login() {
         const response = await axios.post(`${backendUrl}/auth/login`, {
           email,
           password
-        });
+        }, {withCredentials: true});
         if(response.status === 200) {
           // Handle successful login
           setIsLoggedIn(true);
+          getUserData(); 
           navigate('/');
           toast.success('Login successful!');
         } else {

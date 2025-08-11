@@ -1,13 +1,17 @@
 import React from 'react'
 import { assets } from '../assets/assets'
+import { AppContext } from '../context/AppContext'
 
 function Header() {
+
+  const { userData } = React.useContext(AppContext);
+
   return (
     <div className='text-center d-flex flex-column align-items-center justify-content-center py-5 px-3' style={{minHeight: '80vh'}}>
       <img src={assets.logo} alt='header' className='img-fluid mb-3' style={{ width: '100px', height: '100px' }} />
       
       <h5 className='fw-semibold'>
-        Hey developer <span role='img' aria-label='wave'>👋</span>
+        Hey {userData ? userData.name : 'Developer'} <span role='img' aria-label='wave'>👋</span>
       </h5>
 
       <h1 className='fw-bold text-dark'>
